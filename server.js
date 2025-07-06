@@ -1,150 +1,199 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const compression = require('compression');
-const axios = require('axios');
-require('dotenv').config();
+let currentPageToken = '';
+let currentSearchTerm = '';
+let isSearchMode = false;
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Middleware
-app.use(helmet());
-app.use(compression());
-app.use(cors());
-app.use(express.json());
-app.use(express.static('public'));
-
-// YouTube API configuratie
-const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
-const CHANNEL_ID = process.env.YOUTUBE_CHANNEL_ID;
-
-// API Routes
-app.get('/api/videos', async (req, res) => {
-  try {
-    const { maxResults = 12, pageToken = '' } = req.query;
+async function loadLatestVideos() {
+    isSearchMode = false;
+    currentPageToken = '';
+    currentSearchTerm = '';
     
-    const response = await axios.get('https://www.googleapis.com/youtube/v3/search', {
-      params: {
-        key: YOUTUBE_API_KEY,
-        channelId: CHANNEL_ID,
-        part: 'snippet',
-        order: 'date',
-        type: 'video',
-        maxResults: maxResults,
-        pageToken: pageToken
-      }
-    });
-
-    // Haal extra video details op
-    const videoIds = response.data.items.map(item => item.id.videoId).join(',');
-    const detailsResponse = await axios.get('https://www.googleapis.com/youtube/v3/videos', {
-      params: {
-        key: YOUTUBE_API_KEY,
-        id: videoIds,
-        part: 'statistics,contentDetails'
-      }
-    });
-
-    // Combineer data
-    const videosWithDetails = response.data.items.map(item => {
-      const details = detailsResponse.data.items.find(detail => detail.id === item.id.videoId);
-      return {
-        id: item.id.videoId,
-        title: item.snippet.title,
-        description: item.snippet.description,
-        thumbnail: item.snippet.thumbnails.medium.url,
-        publishedAt: item.snippet.publishedAt,
-        viewCount: details?.statistics?.viewCount || 0,
-        likeCount: details?.statistics?.likeCount || 0,
-        duration: details?.contentDetails?.duration || ''
-      };
-    });
-
-    res.json({
-      videos: videosWithDetails,
-      nextPageToken: response.data.nextPageToken,
-      totalResults: response.data.pageInfo.totalResults
-    });
-  } catch (error) {
-    console.error('YouTube API Error:', error.response?.data || error.message);
-    res.status(500).json({ error: 'Fout bij ophalen van videos' });
-  }
-});
-
-app.get('/api/video/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
+    showLoading();
     
-    const response = await axios.get('https://www.googleapis.com/youtube/v3/videos', {
-      params: {
-        key: YOUTUBE_API_KEY,
-        id: id,
-        part: 'snippet,statistics,contentDetails'
-      }
-    });
+    try {
+        const response = await fetch('/api/videos');
+        const data = await response.json();
+        
+        if (data.videos) {
+            displayVideos(data.videos, true);
+            currentPageToken = data.nextPageToken || '';
+            updateLoadMoreButton();
+        } else {
+            throw new Error('Geen video data ontvangen');
+        }
+    } catch (error) {
+        console.error('Fout bij laden van videos:', error);
+        showError('Fout bij het laden van videos. Controleer je API instellingen.');
+    } finally {
+        hideLoading();
+    }
+}
 
-    if (response.data.items.length === 0) {
-      return res.status(404).json({ error: 'Video niet gevonden' });
+async function searchVideos() {
+    const searchTerm = document.getElementById('searchInput').value.trim();
+    if (!searchTerm) {
+        alert('Voer een zoekterm in');
+        return;
     }
 
-    const video = response.data.items[0];
-    res.json({
-      id: video.id,
-      title: video.snippet.title,
-      description: video.snippet.description,
-      thumbnail: video.snippet.thumbnails.high.url,
-      publishedAt: video.snippet.publishedAt,
-      viewCount: video.statistics.viewCount,
-      likeCount: video.statistics.likeCount,
-      duration: video.contentDetails.duration,
-      tags: video.snippet.tags || []
-    });
-  } catch (error) {
-    console.error('YouTube API Error:', error.response?.data || error.message);
-    res.status(500).json({ error: 'Fout bij ophalen van video' });
-  }
-});
-
-app.get('/api/search', async (req, res) => {
-  try {
-    const { q, maxResults = 10 } = req.query;
+    isSearchMode = true;
+    currentSearchTerm = searchTerm;
+    currentPageToken = '';
     
-    if (!q) {
-      return res.status(400).json({ error: 'Zoekterm is verplicht' });
+    showLoading();
+    
+    try {
+        const response = await fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`);
+        const data = await response.json();
+        
+        if (data.videos) {
+            displayVideos(data.videos, true);
+            document.getElementById('loadMore').style.display = 'none';
+        } else {
+            throw new Error('Geen zoekresultaten ontvangen');
+        }
+    } catch (error) {
+        console.error('Fout bij zoeken:', error);
+        showError('Fout bij het zoeken. Probeer het opnieuw.');
+    } finally {
+        hideLoading();
     }
+}
 
-    const response = await axios.get('https://www.googleapis.com/youtube/v3/search', {
-      params: {
-        key: YOUTUBE_API_KEY,
-        channelId: CHANNEL_ID,
-        part: 'snippet',
-        q: q,
-        type: 'video',
-        maxResults: maxResults
-      }
+async function loadMoreVideos() {
+    if (!currentPageToken || isSearchMode) return;
+    
+    showLoading();
+    
+    try {
+        const response = await fetch(`/api/videos?pageToken=${currentPageToken}`);
+        const data = await response.json();
+        
+        if (data.videos) {
+            displayVideos(data.videos, false);
+            currentPageToken = data.nextPageToken || '';
+            updateLoadMoreButton();
+        }
+    } catch (error) {
+        console.error('Fout bij laden van meer videos:', error);
+        showError('Fout bij het laden van meer videos.');
+    } finally {
+        hideLoading();
+    }
+}
+
+function displayVideos(videos, clearFirst = false) {
+    const grid = document.getElementById('videoGrid');
+    
+    if (clearFirst) {
+        grid.innerHTML = '';
+    }
+    
+    videos.forEach(video => {
+        const videoCard = createVideoCard(video);
+        grid.appendChild(videoCard);
+    });
+}
+
+function createVideoCard(video) {
+    const card = document.createElement('div');
+    card.className = 'video-card';
+    card.addEventListener('click', () => openVideoModal(video.id));
+    
+    const publishDate = new Date(video.publishedAt).toLocaleDateString('nl-NL');
+    const viewCount = parseInt(video.viewCount || 0).toLocaleString('nl-NL');
+    
+    card.innerHTML = `
+        <img src="${video.thumbnail}" alt="${video.title}" class="video-thumbnail">
+        <div class="video-info">
+            <h3 class="video-title">${video.title}</h3>
+            <p class="video-description">${video.description}</p>
+            <div class="video-meta">
+                <span>${publishDate}</span>
+                <span>${viewCount} weergaven</span>
+            </div>
+        </div>
+    `;
+    
+    return card;
+}
+
+async function openVideoModal(videoId) {
+    const modal = document.getElementById('videoModal');
+    const modalContent = document.getElementById('modalContent');
+    
+    modalContent.innerHTML = '<p>Laden...</p>';
+    modal.style.display = 'block';
+    
+    try {
+        const response = await fetch(`/api/video/${videoId}`);
+        const video = await response.json();
+        
+        modalContent.innerHTML = `
+            <iframe class="video-player" 
+                    src="https://www.youtube.com/embed/${videoId}?autoplay=1" 
+                    frameborder="0" 
+                    allowfullscreen>
+            </iframe>
+            <h2>${video.title}</h2>
+            <p style="color: #666; margin: 10px 0;">
+                ${new Date(video.publishedAt).toLocaleDateString('nl-NL')} • 
+                ${parseInt(video.viewCount || 0).toLocaleString('nl-NL')} weergaven
+            </p>
+            <p style="line-height: 1.6; margin-top: 15px;">${video.description}</p>
+        `;
+    } catch (error) {
+        console.error('Fout bij laden van video details:', error);
+        modalContent.innerHTML = '<p>Fout bij het laden van video details.</p>';
+    }
+}
+
+function closeModal() {
+    document.getElementById('videoModal').style.display = 'none';
+}
+
+function updateLoadMoreButton() {
+    const loadMoreBtn = document.getElementById('loadMore');
+    loadMoreBtn.style.display = currentPageToken ? 'block' : 'none';
+}
+
+function showLoading() {
+    document.getElementById('loading').style.display = 'block';
+}
+
+function hideLoading() {
+    document.getElementById('loading').style.display = 'none';
+}
+
+function showError(message) {
+    const grid = document.getElementById('videoGrid');
+    grid.innerHTML = `<div style="text-align: center; color: white; padding: 40px;">
+        <h3>⚠️ ${message}</h3>
+    </div>`;
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Button event listeners
+    document.getElementById('searchBtn').addEventListener('click', searchVideos);
+    document.getElementById('latestBtn').addEventListener('click', loadLatestVideos);
+    document.getElementById('loadMoreBtn').addEventListener('click', loadMoreVideos);
+    document.getElementById('closeModal').addEventListener('click', closeModal);
+
+    // Search input enter key
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchVideos();
+        }
     });
 
-    const videos = response.data.items.map(item => ({
-      id: item.id.videoId,
-      title: item.snippet.title,
-      description: item.snippet.description,
-      thumbnail: item.snippet.thumbnails.medium.url,
-      publishedAt: item.snippet.publishedAt
-    }));
+    // Modal click outside to close
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('videoModal');
+        if (event.target === modal) {
+            closeModal();
+        }
+    });
 
-    res.json({ videos });
-  } catch (error) {
-    console.error('YouTube API Error:', error.response?.data || error.message);
-    res.status(500).json({ error: 'Fout bij zoeken' });
-  }
-});
-
-// Serve React app
-app.get('*', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html');
-});
-
-app.listen(PORT, () => {
-  console.log(`Server draait op poort ${PORT}`);
+    // Load videos when page loads
+    loadLatestVideos();
 });
