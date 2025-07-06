@@ -177,15 +177,12 @@ function setActiveMode(mode) {
     
     // Show/hide playlist selector
     const playlistSelector = document.getElementById('playlistSelector');
-    const loadPlaylistsBtn = document.getElementById('loadPlaylistsBtn');
     
     if (mode === 'playlists') {
         playlistSelector.style.display = 'block';
-        loadPlaylistsBtn.style.display = 'inline-block';
         loadPlaylists();
     } else {
         playlistSelector.style.display = 'none';
-        loadPlaylistsBtn.style.display = 'none';
         loadLatestVideos();
     }
 }
@@ -373,7 +370,12 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('searchBtn').addEventListener('click', searchVideos);
     document.getElementById('loadMoreBtn').addEventListener('click', loadMoreVideos);
     document.getElementById('closeModal').addEventListener('click', closeModal);
-    document.getElementById('loadPlaylistsBtn').addEventListener('click', loadPlaylists);
+    
+    // Check if loadPlaylistsBtn exists before adding listener
+    const loadPlaylistsBtn = document.getElementById('loadPlaylistsBtn');
+    if (loadPlaylistsBtn) {
+        loadPlaylistsBtn.addEventListener('click', loadPlaylists);
+    }
 
     // Mode filter listeners
     document.querySelectorAll('.category-btn').forEach(btn => {
