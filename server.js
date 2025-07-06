@@ -107,15 +107,75 @@ app.get('/api/videos', async (req, res) => {
   try {
     const { maxResults = 12, pageToken = '', order = 'date' } = req.query;
     
-    const response = await axios.get('https://www.googleapis.com/youtube/v3/search', {
+    // Gebruik activities API om echt de nieuwste content te krijgen
+    let response;
+    if (order === 'date' && !pageToken) {
+      // Voor de eerste pagina, probeer activities API voor echte nieuwste content
+      try {
+        response = await axios.get('https://www.googleapis.com/youtube/v3/activities', {
+          params: {
+            key: YOUTUBE_API_KEY,
+            channelId: CHANNEL_ID,
+            part: 'snippet,contentDetails',
+            maxResults: maxResults,
+            publishedAfter: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString() // Laatste jaar
+          }
+        });
+        
+        // Filter alleen video uploads
+        const videoActivities = response.data.items.filter(item => 
+          item.snippet.type === 'upload' && 
+          item.contentDetails?.upload?.videoId
+        );
+        
+        if (videoActivities.length > 0) {
+          // Haal video details op
+          const videoIds = videoActivities.map(item => item.contentDetails.upload.videoId).join(',');
+          
+          const detailsResponse = await axios.get('https://www.googleapis.com/youtube/v3/videos', {
+            params: {
+              key: YOUTUBE_API_KEY,
+              id: videoIds,
+              part: 'snippet,statistics,contentDetails'
+            }
+          });
+
+          const videosWithDetails = detailsResponse.data.items.map(video => ({
+            id: video.id,
+            title: video.snippet.title,
+            description: video.snippet.description,
+            thumbnail: video.snippet.thumbnails.medium?.url || video.snippet.thumbnails.default?.url,
+            publishedAt: video.snippet.publishedAt,
+            viewCount: video.statistics?.viewCount || 0,
+            likeCount: video.statistics?.likeCount || 0,
+            duration: video.contentDetails?.duration || ''
+          }));
+
+          // Sorteer op publicatiedatum (nieuwste eerst)
+          videosWithDetails.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+
+          return res.json({
+            videos: videosWithDetails,
+            nextPageToken: null, // Activities API heeft andere paginatie
+            totalResults: videosWithDetails.length
+          });
+        }
+      } catch (activityError) {
+        console.log('Activities API failed, falling back to search API');
+      }
+    }
+    
+    // Fallback naar search API
+    response = await axios.get('https://www.googleapis.com/youtube/v3/search', {
       params: {
         key: YOUTUBE_API_KEY,
         channelId: CHANNEL_ID,
         part: 'snippet',
-        order: order,
+        order: 'date', // Probeer alsnog date ordering
         type: 'video',
-        maxResults: maxResults,
-        pageToken: pageToken
+        maxResults: maxResults * 2, // Haal meer op om te kunnen filteren
+        pageToken: pageToken,
+        publishedAfter: new Date(Date.now() - 2 * 365 * 24 * 60 * 60 * 1000).toISOString() // Laatste 2 jaar
       }
     });
 
@@ -144,6 +204,12 @@ app.get('/api/videos', async (req, res) => {
           duration: details?.contentDetails?.duration || ''
         };
       });
+      
+      // EXTRA SORTERING: Sorteer nogmaals op datum om zeker te zijn
+      videosWithDetails.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+      
+      // Neem alleen de gevraagde hoeveelheid
+      videosWithDetails = videosWithDetails.slice(0, maxResults);
     }
 
     res.json({
