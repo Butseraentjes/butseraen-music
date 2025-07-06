@@ -40,12 +40,28 @@
         /* Header Section */
         .header {
             text-align: center;
-            padding: 60px 0;
-            background: linear-gradient(135deg, var(--warm-brown) 0%, var(--deep-brown) 100%);
+            padding: 0;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.4)), url('/banner-peter.jpg');
+            background-size: cover;
+            background-position: center;
             border-radius: 20px;
             margin-bottom: 40px;
             position: relative;
             overflow: hidden;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+            padding: 60px 40px;
+            backdrop-filter: blur(2px);
+            border-radius: 15px;
+            background: rgba(0,0,0,0.3);
         }
 
         .header::before {
@@ -64,7 +80,7 @@
             to { transform: translateY(-100px); }
         }
 
-        .header h1 {
+        .header-content h1 {
             font-size: 3.5rem;
             font-weight: 800;
             color: var(--primary-gold);
@@ -74,7 +90,7 @@
             z-index: 1;
         }
 
-        .header .subtitle {
+        .header-content .subtitle {
             font-size: 1.3rem;
             color: var(--light-cream);
             margin-bottom: 30px;
@@ -442,21 +458,23 @@
     <div class="container">
         <!-- Header -->
         <header class="header">
-            <h1>🤠 Butseraen</h1>
-            <p class="subtitle">Western Music • Tractor Shows • Family Memories</p>
-            
-            <div class="stats-container">
-                <div class="stat-item">
-                    <span class="stat-number" id="totalVideos">-</span>
-                    <span class="stat-label">Videos</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number" id="totalViews">-</span>
-                    <span class="stat-label">Total Views</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number" id="totalSubscribers">-</span>
-                    <span class="stat-label">Subscribers</span>
+            <div class="header-content">
+                <h1>🤠 Butseraen</h1>
+                <p class="subtitle">Western Music • Tractor Shows • Family Memories</p>
+                
+                <div class="stats-container">
+                    <div class="stat-item">
+                        <span class="stat-number" id="totalVideos">-</span>
+                        <span class="stat-label">Videos</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="totalViews">-</span>
+                        <span class="stat-label">Total Views</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="totalSubscribers">-</span>
+                        <span class="stat-label">Subscribers</span>
+                    </div>
                 </div>
             </div>
         </header>
