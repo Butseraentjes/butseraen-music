@@ -13,188 +13,207 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #0f3460 50%, #533483 100%);
-            color: #333;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
             min-height: 100vh;
-            overflow-x: hidden;
+            line-height: 1.6;
         }
 
-        /* Animated background particles */
-        .background-animation {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: -1;
-        }
-
-        .particle {
-            position: absolute;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            animation: float 6s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(180deg); }
+        /* Western-themed color palette */
+        :root {
+            --primary-gold: #D4AF37;
+            --warm-brown: #8B4513;
+            --deep-brown: #654321;
+            --light-cream: #F5F5DC;
+            --dark-bg: #1a1a1a;
+            --card-bg: #2a2a2a;
+            --accent-orange: #CD853F;
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
         }
 
-        header {
+        /* Header Section */
+        .header {
             text-align: center;
+            padding: 60px 0;
+            background: linear-gradient(135deg, var(--warm-brown) 0%, var(--deep-brown) 100%);
+            border-radius: 20px;
             margin-bottom: 40px;
-            color: white;
             position: relative;
+            overflow: hidden;
         }
 
-        .hero-section {
-            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 300"><path d="M0,300V230c0,0,210-15,350-15s350,15,350,15v70H0z" fill="%23ffffff" fill-opacity="0.1"/></svg>');
-            padding: 60px 40px;
-            border-radius: 25px;
-            margin-bottom: 40px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="white" opacity="0.1"/><circle cx="80" cy="40" r="1" fill="white" opacity="0.1"/><circle cx="40" cy="80" r="1.5" fill="white" opacity="0.1"/></svg>');
+            animation: starfield 20s linear infinite;
         }
 
-        h1 {
-            font-size: 4rem;
-            margin-bottom: 15px;
+        @keyframes starfield {
+            from { transform: translateY(0); }
+            to { transform: translateY(-100px); }
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: var(--primary-gold);
             text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
-            background: linear-gradient(45deg, #fff, #f0c27b, #4b1248);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
         }
 
-        .subtitle {
-            font-size: 1.4rem;
-            opacity: 0.9;
+        .header .subtitle {
+            font-size: 1.3rem;
+            color: var(--light-cream);
             margin-bottom: 30px;
+            position: relative;
+            z-index: 1;
         }
 
-        .stats-row {
+        .stats-container {
             display: flex;
             justify-content: center;
-            gap: 30px;
-            margin-top: 20px;
+            gap: 40px;
+            margin-top: 30px;
+            position: relative;
+            z-index: 1;
         }
 
         .stat-item {
             text-align: center;
-            color: rgba(255,255,255,0.8);
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(212, 175, 55, 0.3);
         }
 
         .stat-number {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #f0c27b;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--primary-gold);
+            display: block;
         }
 
-        .search-container {
-            background: rgba(255, 255, 255, 0.95);
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--light-cream);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Search Section */
+        .search-section {
+            background: var(--card-bg);
             padding: 30px;
             border-radius: 20px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
             margin-bottom: 40px;
-            backdrop-filter: blur(10px);
+            border: 1px solid #333;
         }
 
-        .search-box {
+        .search-bar {
             display: flex;
             gap: 15px;
             margin-bottom: 25px;
         }
 
-        input[type="text"] {
+        .search-input {
             flex: 1;
             padding: 15px 20px;
-            border: 2px solid #e0e0e0;
+            background: var(--dark-bg);
+            border: 2px solid #444;
             border-radius: 12px;
+            color: white;
             font-size: 16px;
-            transition: all 0.3s ease;
-            background: rgba(255,255,255,0.9);
+            transition: border-color 0.3s ease;
         }
 
-        input[type="text"]:focus {
+        .search-input:focus {
             outline: none;
-            border-color: #533483;
-            box-shadow: 0 0 0 3px rgba(83, 52, 131, 0.1);
-            transform: translateY(-2px);
+            border-color: var(--primary-gold);
+        }
+
+        .search-input::placeholder {
+            color: #888;
         }
 
         .btn {
-            padding: 15px 30px;
-            background: linear-gradient(45deg, #533483, #16213e);
-            color: white;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, var(--primary-gold), var(--accent-orange));
+            color: var(--deep-brown);
             border: none;
             border-radius: 12px;
-            cursor: pointer;
-            font-size: 16px;
             font-weight: 600;
+            cursor: pointer;
             transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 1px;
+            font-size: 14px;
         }
 
         .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(83, 52, 131, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
         }
 
         .btn.secondary {
-            background: linear-gradient(45deg, #0f3460, #16213e);
+            background: linear-gradient(135deg, var(--warm-brown), var(--deep-brown));
+            color: var(--light-cream);
         }
 
-        /* Category Filter */
+        /* Category Filters */
         .category-filters {
             display: flex;
-            gap: 15px;
+            gap: 12px;
             justify-content: center;
             flex-wrap: wrap;
             margin-bottom: 20px;
         }
 
         .category-btn {
-            padding: 10px 20px;
-            background: rgba(255,255,255,0.1);
-            color: rgba(255,255,255,0.8);
-            border: 2px solid rgba(255,255,255,0.2);
+            padding: 10px 18px;
+            background: transparent;
+            color: #999;
+            border: 2px solid #444;
             border-radius: 25px;
             cursor: pointer;
-            font-size: 14px;
             transition: all 0.3s ease;
+            font-size: 14px;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
         .category-btn:hover,
         .category-btn.active {
-            background: rgba(240, 194, 123, 0.2);
-            border-color: #f0c27b;
-            color: #f0c27b;
+            background: var(--primary-gold);
+            border-color: var(--primary-gold);
+            color: var(--deep-brown);
             transform: translateY(-2px);
         }
 
+        /* Loading */
         .loading {
             text-align: center;
             padding: 60px;
-            color: white;
-            font-size: 1.4rem;
+            color: var(--primary-gold);
         }
 
         .loading i {
             font-size: 3rem;
             margin-bottom: 20px;
-            animation: spin 2s linear infinite;
+            animation: spin 1.5s linear infinite;
         }
 
         @keyframes spin {
@@ -202,33 +221,43 @@
             to { transform: rotate(360deg); }
         }
 
+        /* Video Grid */
         .video-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 25px;
             margin-top: 30px;
         }
 
         .video-card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
+            background: var(--card-bg);
+            border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            transition: all 0.4s ease;
+            border: 1px solid #333;
+            transition: all 0.3s ease;
             cursor: pointer;
-            position: relative;
         }
 
         .video-card:hover {
-            transform: translateY(-10px) scale(1.02);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            transform: translateY(-8px);
+            border-color: var(--primary-gold);
+            box-shadow: 0 15px 40px rgba(212, 175, 55, 0.2);
+        }
+
+        .video-thumbnail-container {
+            position: relative;
+            overflow: hidden;
         }
 
         .video-thumbnail {
             width: 100%;
-            height: 220px;
+            height: 200px;
             object-fit: cover;
-            position: relative;
+            transition: transform 0.3s ease;
+        }
+
+        .video-card:hover .video-thumbnail {
+            transform: scale(1.05);
         }
 
         .video-overlay {
@@ -237,7 +266,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.7));
+            background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.8));
             opacity: 0;
             transition: opacity 0.3s ease;
             display: flex;
@@ -250,15 +279,15 @@
         }
 
         .play-button {
-            background: rgba(255,255,255,0.9);
+            background: var(--primary-gold);
             border-radius: 50%;
             width: 60px;
             height: 60px;
             display: flex;
             align-items: center;
             justify-content: center;
+            color: var(--deep-brown);
             font-size: 20px;
-            color: #533483;
             transform: scale(0.8);
             transition: transform 0.3s ease;
         }
@@ -272,10 +301,10 @@
         }
 
         .video-title {
-            font-size: 1.2rem;
-            font-weight: 700;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: white;
             margin-bottom: 10px;
-            color: #1a1a2e;
             line-height: 1.4;
             display: -webkit-box;
             -webkit-line-clamp: 2;
@@ -284,14 +313,13 @@
         }
 
         .video-description {
-            color: #666;
+            color: #bbb;
             font-size: 0.9rem;
-            line-height: 1.5;
+            margin-bottom: 15px;
             display: -webkit-box;
-            -webkit-line-clamp: 3;
+            -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            margin-bottom: 15px;
         }
 
         .video-meta {
@@ -303,20 +331,16 @@
         }
 
         .video-category {
-            background: linear-gradient(45deg, #533483, #16213e);
-            color: white;
-            padding: 4px 12px;
-            border-radius: 15px;
+            background: var(--primary-gold);
+            color: var(--deep-brown);
+            padding: 4px 10px;
+            border-radius: 12px;
             font-size: 0.75rem;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
-        .load-more {
-            text-align: center;
-            margin-top: 40px;
-        }
-
+        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -326,57 +350,43 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0,0,0,0.9);
-            backdrop-filter: blur(5px);
         }
 
         .modal-content {
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            background: var(--dark-bg);
             margin: 2% auto;
             padding: 30px;
-            border-radius: 25px;
+            border-radius: 20px;
             width: 90%;
-            max-width: 900px;
+            max-width: 800px;
             max-height: 90vh;
             overflow-y: auto;
-            color: white;
-            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+            border: 1px solid #333;
         }
 
         .close {
-            color: rgba(255,255,255,0.7);
+            color: #999;
             float: right;
-            font-size: 32px;
+            font-size: 28px;
             font-weight: bold;
             cursor: pointer;
             transition: color 0.3s ease;
         }
 
         .close:hover {
-            color: #f0c27b;
+            color: var(--primary-gold);
         }
 
         .video-player {
             width: 100%;
-            height: 450px;
-            border-radius: 15px;
-            margin-bottom: 25px;
-        }
-
-        .modal-video-title {
-            font-size: 1.8rem;
-            margin-bottom: 15px;
-            color: #f0c27b;
-        }
-
-        .modal-video-meta {
-            color: rgba(255,255,255,0.8);
+            height: 400px;
+            border-radius: 12px;
             margin-bottom: 20px;
-            font-size: 1.1rem;
         }
 
-        .modal-video-description {
-            line-height: 1.7;
-            color: rgba(255,255,255,0.9);
+        .load-more {
+            text-align: center;
+            margin-top: 40px;
         }
 
         /* Responsive */
@@ -385,69 +395,79 @@
                 padding: 15px;
             }
             
-            h1 {
+            .header h1 {
                 font-size: 2.5rem;
             }
             
-            .search-box {
+            .search-bar {
                 flex-direction: column;
+            }
+            
+            .stats-container {
+                flex-direction: column;
+                gap: 20px;
             }
             
             .video-grid {
                 grid-template-columns: 1fr;
             }
             
-            .video-player {
-                height: 250px;
-            }
-
-            .stats-row {
-                flex-direction: column;
-                gap: 15px;
-            }
-
             .category-filters {
-                gap: 10px;
+                gap: 8px;
             }
-
+            
             .category-btn {
                 padding: 8px 15px;
                 font-size: 12px;
             }
         }
+
+        /* Error State */
+        .error-message {
+            text-align: center;
+            padding: 60px;
+            color: #ff6b6b;
+            background: var(--card-bg);
+            border-radius: 15px;
+            border: 1px solid #444;
+        }
+
+        .error-message i {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
-    <!-- Animated background -->
-    <div class="background-animation" id="backgroundAnimation"></div>
-
     <div class="container">
-        <header>
-            <div class="hero-section">
-                <h1>🤠 Butseraen</h1>
-                <p class="subtitle">Western Music • Tractor Shows • Family Memories</p>
-                
-                <div class="stats-row">
-                    <div class="stat-item">
-                        <div class="stat-number" id="totalVideos">-</div>
-                        <div>Videos</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number" id="totalViews">-</div>
-                        <div>Total Views</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number" id="totalSubscribers">-</div>
-                        <div>Subscribers</div>
-                    </div>
+        <!-- Header -->
+        <header class="header">
+            <h1>🤠 Butseraen</h1>
+            <p class="subtitle">Western Music • Tractor Shows • Family Memories</p>
+            
+            <div class="stats-container">
+                <div class="stat-item">
+                    <span class="stat-number" id="totalVideos">-</span>
+                    <span class="stat-label">Videos</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="totalViews">-</span>
+                    <span class="stat-label">Total Views</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="totalSubscribers">-</span>
+                    <span class="stat-label">Subscribers</span>
                 </div>
             </div>
         </header>
 
-        <div class="search-container">
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="🔍 Search for Western music, tractor videos, or family content...">
-                <button class="btn" id="searchBtn"><i class="fas fa-search"></i> Search</button>
+        <!-- Search Section -->
+        <div class="search-section">
+            <div class="search-bar">
+                <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search for Western music, tractor videos, or family content...">
+                <button class="btn" id="searchBtn">
+                    <i class="fas fa-search"></i> Search
+                </button>
             </div>
             
             <div class="category-filters">
@@ -464,7 +484,7 @@
                     <i class="fas fa-heart"></i> Family Videos
                 </button>
                 <button class="category-btn" data-category="school">
-                    <i class="fas fa-school"></i> School Events
+                    <i class="fas fa-graduation-cap"></i> School Events
                 </button>
             </div>
             
@@ -473,13 +493,16 @@
             </button>
         </div>
 
+        <!-- Loading -->
         <div id="loading" class="loading" style="display: none;">
             <i class="fas fa-spinner"></i>
             <div>Loading your amazing content...</div>
         </div>
 
+        <!-- Video Grid -->
         <div id="videoGrid" class="video-grid"></div>
 
+        <!-- Load More -->
         <div id="loadMore" class="load-more" style="display: none;">
             <button class="btn" id="loadMoreBtn">
                 <i class="fas fa-plus"></i> Load More Videos
@@ -487,7 +510,7 @@
         </div>
     </div>
 
-    <!-- Modal voor video player -->
+    <!-- Modal -->
     <div id="videoModal" class="modal">
         <div class="modal-content">
             <span class="close" id="closeModal">&times;</span>
@@ -496,25 +519,5 @@
     </div>
 
     <script src="/js/app.js"></script>
-    <script>
-        // Create animated background particles
-        function createParticles() {
-            const container = document.getElementById('backgroundAnimation');
-            for (let i = 0; i < 50; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                particle.style.left = Math.random() * 100 + '%';
-                particle.style.top = Math.random() * 100 + '%';
-                particle.style.width = Math.random() * 4 + 2 + 'px';
-                particle.style.height = particle.style.width;
-                particle.style.animationDelay = Math.random() * 6 + 's';
-                particle.style.animationDuration = (Math.random() * 4 + 4) + 's';
-                container.appendChild(particle);
-            }
-        }
-
-        // Initialize particles
-        createParticles();
-    </script>
 </body>
 </html>
