@@ -108,6 +108,34 @@ app.get('/api/video/:id', async (req, res) => {
   }
 });
 
+app.get('/api/channel-stats', async (req, res) => {
+  try {
+    const response = await axios.get('https://www.googleapis.com/youtube/v3/channels', {
+      params: {
+        key: YOUTUBE_API_KEY,
+        id: CHANNEL_ID,
+        part: 'statistics,snippet'
+      }
+    });
+
+    if (response.data.items.length === 0) {
+      return res.status(404).json({ error: 'Kanaal niet gevonden' });
+    }
+
+    const channel = response.data.items[0];
+    res.json({
+      subscriberCount: channel.statistics.subscriberCount,
+      videoCount: channel.statistics.videoCount,
+      viewCount: channel.statistics.viewCount,
+      title: channel.snippet.title,
+      description: channel.snippet.description
+    });
+  } catch (error) {
+    console.error('YouTube API Error:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Fout bij ophalen van kanaal statistieken' });
+  }
+});
+
 app.get('/api/search', async (req, res) => {
   try {
     const { q, maxResults = 10 } = req.query;
