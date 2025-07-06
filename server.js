@@ -22,6 +22,87 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // API Routes
+app.get('/api/playlists', async (req, res) => {
+  try {
+    const response = await axios.get('https://www.googleapis.com/youtube/v3/playlists', {
+      params: {
+        key: YOUTUBE_API_KEY,
+        channelId: CHANNEL_ID,
+        part: 'snippet,contentDetails',
+        maxResults: 50
+      }
+    });
+
+    const playlists = response.data.items.map(playlist => ({
+      id: playlist.id,
+      title: playlist.snippet.title,
+      description: playlist.snippet.description,
+      thumbnail: playlist.snippet.thumbnails.medium?.url || playlist.snippet.thumbnails.default?.url,
+      itemCount: playlist.contentDetails.itemCount,
+      publishedAt: playlist.snippet.publishedAt
+    }));
+
+    res.json({ playlists });
+  } catch (error) {
+    console.error('YouTube API Error:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Fout bij ophalen van playlists' });
+  }
+});
+
+app.get('/api/playlist/:id/videos', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { maxResults = 20, pageToken = '' } = req.query;
+    
+    const response = await axios.get('https://www.googleapis.com/youtube/v3/playlistItems', {
+      params: {
+        key: YOUTUBE_API_KEY,
+        playlistId: id,
+        part: 'snippet',
+        maxResults: maxResults,
+        pageToken: pageToken
+      }
+    });
+
+    // Haal video details op
+    const videoIds = response.data.items.map(item => item.snippet.resourceId.videoId).join(',');
+    
+    let videosWithDetails = [];
+    if (videoIds) {
+      const detailsResponse = await axios.get('https://www.googleapis.com/youtube/v3/videos', {
+        params: {
+          key: YOUTUBE_API_KEY,
+          id: videoIds,
+          part: 'statistics,contentDetails'
+        }
+      });
+
+      videosWithDetails = response.data.items.map(item => {
+        const details = detailsResponse.data.items.find(detail => detail.id === item.snippet.resourceId.videoId);
+        return {
+          id: item.snippet.resourceId.videoId,
+          title: item.snippet.title,
+          description: item.snippet.description,
+          thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
+          publishedAt: item.snippet.publishedAt,
+          viewCount: details?.statistics?.viewCount || 0,
+          likeCount: details?.statistics?.likeCount || 0,
+          duration: details?.contentDetails?.duration || ''
+        };
+      });
+    }
+
+    res.json({
+      videos: videosWithDetails,
+      nextPageToken: response.data.nextPageToken,
+      totalResults: response.data.pageInfo.totalResults
+    });
+  } catch (error) {
+    console.error('YouTube API Error:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Fout bij ophalen van playlist videos' });
+  }
+});
+
 app.get('/api/videos', async (req, res) => {
   try {
     const { maxResults = 12, pageToken = '', order = 'date' } = req.query;
@@ -31,14 +112,13 @@ app.get('/api/videos', async (req, res) => {
         key: YOUTUBE_API_KEY,
         channelId: CHANNEL_ID,
         part: 'snippet',
-        order: order, // date = nieuwste eerst, relevance = meest relevant
+        order: order,
         type: 'video',
         maxResults: maxResults,
         pageToken: pageToken
       }
     });
 
-    // Haal extra video details op
     const videoIds = response.data.items.map(item => item.id.videoId).join(',');
     
     let videosWithDetails = [];
@@ -51,14 +131,13 @@ app.get('/api/videos', async (req, res) => {
         }
       });
 
-      // Combineer data
       videosWithDetails = response.data.items.map(item => {
         const details = detailsResponse.data.items.find(detail => detail.id === item.id.videoId);
         return {
           id: item.id.videoId,
           title: item.snippet.title,
           description: item.snippet.description,
-          thumbnail: item.snippet.thumbnails.medium.url,
+          thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
           publishedAt: item.snippet.publishedAt,
           viewCount: details?.statistics?.viewCount || 0,
           likeCount: details?.statistics?.likeCount || 0,
