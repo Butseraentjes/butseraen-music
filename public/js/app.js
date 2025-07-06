@@ -3,39 +3,39 @@ let currentSearchTerm = '';
 let isSearchMode = false;
 let currentCategory = 'all';
 let allVideos = [];
-let channelStats = {};
 
 // Category keywords for filtering
 const categoryKeywords = {
-    western: ['western', 'butseraen', 'instrumental', 'music', 'town', 'frontier', 'cowboy', 'wild west'],
-    tractor: ['tractor', 'landbouw', 'farming', 'agricultural', 'machine'],
-    family: ['family', 'helena', 'efteling', 'weekend', 'holiday', 'vacation', 'trip'],
-    school: ['school', 'scholenveld', 'leerkrachten', 'children', 'event', 'loop']
+    western: ['western', 'butseraen', 'instrumental', 'music', 'town', 'frontier', 'cowboy', 'wild west', 'cinematic'],
+    tractor: ['tractor', 'landbouw', 'farming', 'agricultural', 'machine', 'traktor'],
+    family: ['family', 'helena', 'efteling', 'weekend', 'holiday', 'vacation', 'trip', 'marraine', 'rachel'],
+    school: ['school', 'scholenveld', 'leerkrachten', 'children', 'event', 'loop', 'lebbeke']
 };
 
 async function loadChannelStats() {
     try {
-        const response = await fetch(`/api/channel-stats`);
+        const response = await fetch('/api/channel-stats');
         if (response.ok) {
-            channelStats = await response.json();
-            updateStatsDisplay();
+            const stats = await response.json();
+            updateStatsDisplay(stats);
         }
     } catch (error) {
-        console.log('Could not load channel stats');
+        console.log('Could not load channel stats:', error);
     }
 }
 
-function updateStatsDisplay() {
-    document.getElementById('totalVideos').textContent = channelStats.videoCount || '-';
-    document.getElementById('totalViews').textContent = formatNumber(channelStats.viewCount) || '-';
-    document.getElementById('totalSubscribers').textContent = formatNumber(channelStats.subscriberCount) || '-';
+function updateStatsDisplay(stats) {
+    document.getElementById('totalVideos').textContent = stats.videoCount || '-';
+    document.getElementById('totalViews').textContent = formatNumber(stats.viewCount) || '-';
+    document.getElementById('totalSubscribers').textContent = formatNumber(stats.subscriberCount) || '-';
 }
 
 function formatNumber(num) {
     if (!num) return '-';
-    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
-    return num.toLocaleString();
+    const number = parseInt(num);
+    if (number >= 1000000) return (number / 1000000).toFixed(1) + 'M';
+    if (number >= 1000) return (number / 1000).toFixed(1) + 'K';
+    return number.toLocaleString();
 }
 
 function categorizeVideo(video) {
@@ -59,12 +59,18 @@ async function loadLatestVideos() {
     showLoading();
     
     try {
-        const response = await fetch('/api/videos?maxResults=24');
+        // Vraag expliciet naar videos gesorteerd op datum (nieuwste eerst)
+        const response = await fetch('/api/videos?maxResults=24&order=date');
         const data = await response.json();
         
         if (data.videos) {
+            // Sorteer nog een keer op datum om zeker te zijn dat nieuwste eerst komen
+            const sortedVideos = data.videos.sort((a, b) => {
+                return new Date(b.publishedAt) - new Date(a.publishedAt);
+            });
+            
             // Add categories to videos
-            allVideos = data.videos.map(video => ({
+            allVideos = sortedVideos.map(video => ({
                 ...video,
                 category: categorizeVideo(video)
             }));
@@ -127,6 +133,18 @@ function filterAndDisplayVideos() {
     }
     
     displayVideos(videosToShow, true);
+    
+    // Update de grid display text
+    const grid = document.getElementById('videoGrid');
+    if (videosToShow.length === 0) {
+        grid.innerHTML = `
+            <div style="grid-column: 1 / -1;" class="error-message">
+                <i class="fas fa-search"></i>
+                <h3>Geen videos gevonden in deze categorie</h3>
+                <p>Probeer een andere categorie of zoekterm.</p>
+            </div>
+        `;
+    }
 }
 
 function setActiveCategory(category) {
@@ -148,7 +166,7 @@ async function loadMoreVideos() {
     showLoading();
     
     try {
-        const response = await fetch(`/api/videos?pageToken=${currentPageToken}&maxResults=12`);
+        const response = await fetch(`/api/videos?pageToken=${currentPageToken}&maxResults=12&order=date`);
         const data = await response.json();
         
         if (data.videos) {
@@ -194,8 +212,17 @@ function createVideoCard(video) {
     // Get category display info
     const categoryInfo = getCategoryDisplayInfo(video.category);
     
+    // Calculate how many days ago the video was published
+    const daysAgo = Math.floor((new Date() - new Date(video.publishedAt)) / (1000 * 60 * 60 * 24));
+    let timeAgo = '';
+    if (daysAgo === 0) timeAgo = 'Today';
+    else if (daysAgo === 1) timeAgo = 'Yesterday';
+    else if (daysAgo < 30) timeAgo = `${daysAgo} days ago`;
+    else if (daysAgo < 365) timeAgo = `${Math.floor(daysAgo / 30)} months ago`;
+    else timeAgo = `${Math.floor(daysAgo / 365)} years ago`;
+    
     card.innerHTML = `
-        <div style="position: relative;">
+        <div class="video-thumbnail-container">
             <img src="${video.thumbnail}" alt="${video.title}" class="video-thumbnail">
             <div class="video-overlay">
                 <div class="play-button">
@@ -208,8 +235,8 @@ function createVideoCard(video) {
             <p class="video-description">${video.description}</p>
             <div class="video-meta">
                 <div>
-                    <div style="margin-bottom: 5px;">${publishDate} • ${viewCount} views</div>
-                    <span class="video-category" style="background: ${categoryInfo.color};">
+                    <div style="margin-bottom: 8px;">${timeAgo} • ${viewCount} views</div>
+                    <span class="video-category">
                         <i class="${categoryInfo.icon}"></i> ${categoryInfo.name}
                     </span>
                 </div>
@@ -222,11 +249,11 @@ function createVideoCard(video) {
 
 function getCategoryDisplayInfo(category) {
     const categoryMap = {
-        western: { name: 'Western Music', icon: 'fas fa-guitar', color: 'linear-gradient(45deg, #8B4513, #CD853F)' },
-        tractor: { name: 'Tractor Show', icon: 'fas fa-tractor', color: 'linear-gradient(45deg, #228B22, #32CD32)' },
-        family: { name: 'Family Time', icon: 'fas fa-heart', color: 'linear-gradient(45deg, #FF69B4, #FF1493)' },
-        school: { name: 'School Event', icon: 'fas fa-school', color: 'linear-gradient(45deg, #4169E1, #1E90FF)' },
-        other: { name: 'Other', icon: 'fas fa-video', color: 'linear-gradient(45deg, #533483, #16213e)' }
+        western: { name: 'Western Music', icon: 'fas fa-guitar' },
+        tractor: { name: 'Tractor Show', icon: 'fas fa-tractor' },
+        family: { name: 'Family Time', icon: 'fas fa-heart' },
+        school: { name: 'School Event', icon: 'fas fa-graduation-cap' },
+        other: { name: 'Other', icon: 'fas fa-video' }
     };
     
     return categoryMap[category] || categoryMap.other;
@@ -236,7 +263,13 @@ async function openVideoModal(videoId) {
     const modal = document.getElementById('videoModal');
     const modalContent = document.getElementById('modalContent');
     
-    modalContent.innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i><br><br>Loading video...</div>';
+    modalContent.innerHTML = `
+        <div style="text-align: center; padding: 40px;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary-gold);"></i>
+            <br><br>
+            <span style="color: var(--primary-gold);">Loading video...</span>
+        </div>
+    `;
     modal.style.display = 'block';
     
     try {
@@ -249,17 +282,22 @@ async function openVideoModal(videoId) {
                     frameborder="0" 
                     allowfullscreen>
             </iframe>
-            <h2 class="modal-video-title">${video.title}</h2>
-            <p class="modal-video-meta">
+            <h2 style="color: var(--primary-gold); margin-bottom: 15px;">${video.title}</h2>
+            <p style="color: #bbb; margin-bottom: 20px; font-size: 1.1rem;">
                 <i class="fas fa-calendar"></i> ${new Date(video.publishedAt).toLocaleDateString('nl-NL')} • 
                 <i class="fas fa-eye"></i> ${formatNumber(parseInt(video.viewCount || 0))} views •
                 <i class="fas fa-thumbs-up"></i> ${formatNumber(parseInt(video.likeCount || 0))} likes
             </p>
-            <div class="modal-video-description">${video.description.replace(/\n/g, '<br>')}</div>
+            <div style="line-height: 1.6; color: #ccc;">${video.description.replace(/\n/g, '<br>')}</div>
         `;
     } catch (error) {
         console.error('Fout bij laden van video details:', error);
-        modalContent.innerHTML = '<div style="text-align: center; padding: 40px; color: #ff6b6b;"><i class="fas fa-exclamation-triangle" style="font-size: 2rem;"></i><br><br>Error loading video details.</div>';
+        modalContent.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #ff6b6b;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 2rem;"></i>
+                <br><br>Error loading video details.
+            </div>
+        `;
     }
 }
 
@@ -282,10 +320,12 @@ function hideLoading() {
 
 function showError(message) {
     const grid = document.getElementById('videoGrid');
-    grid.innerHTML = `<div style="text-align: center; color: white; padding: 60px; grid-column: 1 / -1;">
-        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 20px; color: #ff6b6b;"></i>
-        <h3>${message}</h3>
-    </div>`;
+    grid.innerHTML = `
+        <div style="grid-column: 1 / -1;" class="error-message">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>${message}</h3>
+        </div>
+    `;
 }
 
 // Event listeners
