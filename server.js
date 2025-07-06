@@ -12,18 +12,9 @@ const PORT = process.env.PORT || 3000;
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 const CHANNEL_ID = process.env.YOUTUBE_CHANNEL_ID;
 
-// Middleware
+// Middleware - CSP uitgeschakeld voor testen
 app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "https:", "http:"],
-      frameSrc: ["'self'", "https://www.youtube.com", "https://youtube.com"],
-      connectSrc: ["'self'", "https://www.googleapis.com"]
-    }
-  }
+  contentSecurityPolicy: false
 }));
 app.use(compression());
 app.use(cors());
