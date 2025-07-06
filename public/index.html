@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mijn Muziek</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .search-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .video-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+
+        .video-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .video-thumbnail {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .video-info {
+            padding: 15px;
+        }
+
+        .video-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            line-height: 1.3;
+        }
+
+        .video-description {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .video-meta {
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .load-more {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 2% auto;
+            padding: 20px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .video-player {
+            width: 100%;
+            height: 400px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .search-box {
+                flex-direction: column;
+            }
+            
+            .video-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .video-player {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎵 Mijn Muziek</h1>
+            <p class="subtitle">Ontdek mijn laatste tracks en creaties</p>
+        </header>
+
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Zoek naar een specifiek nummer...">
+                <button class="btn" onclick="searchVideos()">Zoeken</button>
+            </div>
+            <button class="btn" onclick="loadLatestVideos()">Laatste Videos</button>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            Laden...
+        </div>
+
+        <div id="videoGrid" class="video-grid"></div>
+
+        <div id="loadMore" class="load-more" style="display: none;">
+            <button class="btn" onclick="loadMoreVideos()">Meer Laden</button>
+        </div>
+    </div>
+
+    <!-- Modal voor video player -->
+    <div id="videoModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentPageToken = '';
+        let currentSearchTerm = '';
+        let isSearchMode = false;
+
+        async function loadLatestVideos() {
+            isSearchMode = false;
+            currentPageToken = '';
+            currentSearchTerm = '';
+            
+            showLoading();
+            
+            try {
+                const response = await fetch('/api/videos');
+                const data = await response.json();
+                
+                if (data.videos) {
+                    displayVideos(data.videos, true);
+                    currentPageToken = data.nextPageToken || '';
+                    updateLoadMoreButton();
+                } else {
+                    throw new Error('Geen video data ontvangen');
+                }
+            } catch (error) {
+                console.error('Fout bij laden van videos:', error);
+                showError('Fout bij het laden van videos. Controleer je API instellingen.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function searchVideos() {
+            const searchTerm = document.getElementById('searchInput').value.trim();
+            if (!searchTerm) {
+                alert('Voer een zoekterm in');
+                return;
+            }
+
+            isSearchMode = true;
+            currentSearchTerm = searchTerm;
+            currentPageToken = '';
+            
+            showLoading();
+            
+            try {
+                const response = await fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`);
+                const data = await response.json();
+                
+                if (data.videos) {
+                    displayVideos(data.videos, true);
+                    document.getElementById('loadMore').style.display = 'none';
+                } else {
+                    throw new Error('Geen zoekresultaten ontvangen');
+                }
+            } catch (error) {
+                console.error('Fout bij zoeken:', error);
+                showError('Fout bij het zoeken. Probeer het opnieuw.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function loadMoreVideos() {
+            if (!currentPageToken || isSearchMode) return;
+            
+            showLoading();
+            
+            try {
+                const response = await fetch(`/api/videos?pageToken=${currentPageToken}`);
+                const data = await response.json();
+                
+                if (data.videos) {
+                    displayVideos(data.videos, false);
+                    currentPageToken = data.nextPageToken || '';
+                    updateLoadMoreButton();
+                }
+            } catch (error) {
+                console.error('Fout bij laden van meer videos:', error);
+                showError('Fout bij het laden van meer videos.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayVideos(videos, clearFirst = false) {
+            const grid = document.getElementById('videoGrid');
+            
+            if (clearFirst) {
+                grid.innerHTML = '';
+            }
+            
+            videos.forEach(video => {
+                const videoCard = createVideoCard(video);
+                grid.appendChild(videoCard);
+            });
+        }
+
+        function createVideoCard(video) {
+            const card = document.createElement('div');
+            card.className = 'video-card';
+            card.onclick = () => openVideoModal(video.id);
+            
+            const publishDate = new Date(video.publishedAt).toLocaleDateString('nl-NL');
+            const viewCount = parseInt(video.viewCount || 0).toLocaleString('nl-NL');
+            
+            card.innerHTML = `
+                <img src="${video.thumbnail}" alt="${video.title}" class="video-thumbnail">
+                <div class="video-info">
+                    <h3 class="video-title">${video.title}</h3>
+                    <p class="video-description">${video.description}</p>
+                    <div class="video-meta">
+                        <span>${publishDate}</span>
+                        <span>${viewCount} weergaven</span>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        async function openVideoModal(videoId) {
+            const modal = document.getElementById('videoModal');
+            const modalContent = document.getElementById('modalContent');
+            
+            modalContent.innerHTML = '<p>Laden...</p>';
+            modal.style.display = 'block';
+            
+            try {
+                const response = await fetch(`/api/video/${videoId}`);
+                const video = await response.json();
+                
+                modalContent.innerHTML = `
+                    <iframe class="video-player" 
+                            src="https://www.youtube.com/embed/${videoId}?autoplay=1" 
+                            frameborder="0" 
+                            allowfullscreen>
+                    </iframe>
+                    <h2>${video.title}</h2>
+                    <p style="color: #666; margin: 10px 0;">
+                        ${new Date(video.publishedAt).toLocaleDateString('nl-NL')} • 
+                        ${parseInt(video.viewCount || 0).toLocaleString('nl-NL')} weergaven
+                    </p>
+                    <p style="line-height: 1.6; margin-top: 15px;">${video.description}</p>
+                `;
+            } catch (error) {
+                console.error('Fout bij laden van video details:', error);
+                modalContent.innerHTML = '<p>Fout bij het laden van video details.</p>';
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('videoModal').style.display = 'none';
+        }
+
+        function updateLoadMoreButton() {
+            const loadMoreBtn = document.getElementById('loadMore');
+            loadMoreBtn.style.display = currentPageToken ? 'block' : 'none';
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function showError(message) {
+            const grid = document.getElementById('videoGrid');
+            grid.innerHTML = `<div style="text-align: center; color: white; padding: 40px;">
+                <h3>⚠️ ${message}</h3>
+            </div>`;
+        }
+
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchVideos();
+            }
+        });
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('videoModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        // Laad videos bij het laden van de pagina
+        window.addEventListener('load', loadLatestVideos);
+    </script>
+</body>
+</html>
