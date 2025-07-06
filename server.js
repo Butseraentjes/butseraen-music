@@ -24,14 +24,14 @@ app.use(express.static('public'));
 // API Routes
 app.get('/api/videos', async (req, res) => {
   try {
-    const { maxResults = 12, pageToken = '' } = req.query;
+    const { maxResults = 12, pageToken = '', order = 'date' } = req.query;
     
     const response = await axios.get('https://www.googleapis.com/youtube/v3/search', {
       params: {
         key: YOUTUBE_API_KEY,
         channelId: CHANNEL_ID,
         part: 'snippet',
-        order: 'date',
+        order: order, // date = nieuwste eerst, relevance = meest relevant
         type: 'video',
         maxResults: maxResults,
         pageToken: pageToken
@@ -40,28 +40,32 @@ app.get('/api/videos', async (req, res) => {
 
     // Haal extra video details op
     const videoIds = response.data.items.map(item => item.id.videoId).join(',');
-    const detailsResponse = await axios.get('https://www.googleapis.com/youtube/v3/videos', {
-      params: {
-        key: YOUTUBE_API_KEY,
-        id: videoIds,
-        part: 'statistics,contentDetails'
-      }
-    });
+    
+    let videosWithDetails = [];
+    if (videoIds) {
+      const detailsResponse = await axios.get('https://www.googleapis.com/youtube/v3/videos', {
+        params: {
+          key: YOUTUBE_API_KEY,
+          id: videoIds,
+          part: 'statistics,contentDetails'
+        }
+      });
 
-    // Combineer data
-    const videosWithDetails = response.data.items.map(item => {
-      const details = detailsResponse.data.items.find(detail => detail.id === item.id.videoId);
-      return {
-        id: item.id.videoId,
-        title: item.snippet.title,
-        description: item.snippet.description,
-        thumbnail: item.snippet.thumbnails.medium.url,
-        publishedAt: item.snippet.publishedAt,
-        viewCount: details?.statistics?.viewCount || 0,
-        likeCount: details?.statistics?.likeCount || 0,
-        duration: details?.contentDetails?.duration || ''
-      };
-    });
+      // Combineer data
+      videosWithDetails = response.data.items.map(item => {
+        const details = detailsResponse.data.items.find(detail => detail.id === item.id.videoId);
+        return {
+          id: item.id.videoId,
+          title: item.snippet.title,
+          description: item.snippet.description,
+          thumbnail: item.snippet.thumbnails.medium.url,
+          publishedAt: item.snippet.publishedAt,
+          viewCount: details?.statistics?.viewCount || 0,
+          likeCount: details?.statistics?.likeCount || 0,
+          duration: details?.contentDetails?.duration || ''
+        };
+      });
+    }
 
     res.json({
       videos: videosWithDetails,
