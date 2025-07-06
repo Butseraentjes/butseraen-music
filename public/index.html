@@ -471,25 +471,22 @@
             </div>
             
             <div class="category-filters">
-                <button class="category-btn active" data-category="all">
-                    <i class="fas fa-th"></i> All Content
+                <button class="category-btn active" data-category="latest">
+                    <i class="fas fa-clock"></i> Latest Videos
                 </button>
-                <button class="category-btn" data-category="western">
-                    <i class="fas fa-guitar"></i> Western Music
-                </button>
-                <button class="category-btn" data-category="tractor">
-                    <i class="fas fa-tractor"></i> Tractor Shows
-                </button>
-                <button class="category-btn" data-category="family">
-                    <i class="fas fa-heart"></i> Family Videos
-                </button>
-                <button class="category-btn" data-category="school">
-                    <i class="fas fa-graduation-cap"></i> School Events
+                <button class="category-btn" data-category="playlists">
+                    <i class="fas fa-list"></i> My Playlists
                 </button>
             </div>
             
-            <button class="btn secondary" id="latestBtn">
-                <i class="fas fa-clock"></i> Latest Videos
+            <div id="playlistSelector" style="display: none; margin-bottom: 20px;">
+                <select id="playlistSelect" style="width: 100%; padding: 12px; background: var(--dark-bg); border: 2px solid #444; border-radius: 12px; color: white; font-size: 16px;">
+                    <option value="">Select a playlist...</option>
+                </select>
+            </div>
+            
+            <button class="btn secondary" id="loadPlaylistsBtn" style="display: none;">
+                <i class="fas fa-sync"></i> Load Playlists
             </button>
         </div>
 
